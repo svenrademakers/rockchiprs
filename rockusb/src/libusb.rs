@@ -256,6 +256,12 @@ impl Transport {
     pub fn reset_device(&mut self, opcode: ResetOpcode) -> Result<()> {
         self.handle_operation(crate::operation::reset_device(opcode))
     }
+
+    /// Get which mode the Rock device is booted.
+    pub fn boot_mode(&self) -> Result<BootMode> {
+        let version = self.handle.device().device_descriptor()?.device_version().2 & 0x1;
+        Ok(version.into())
+    }
 }
 
 /// IO object which implements [Read](std::io::Read), [Write](std::io::Write) and
@@ -460,5 +466,20 @@ where
             }
         };
         Ok(self.offset)
+    }
+}
+
+pub enum BootMode {
+    MaskedRom = 0,
+    Loader = 1,
+}
+
+impl From<u8> for BootMode {
+    fn from(value: u8) -> Self {
+        match value {
+            0 => BootMode::MaskedRom,
+            1 => BootMode::Loader,
+            _ => panic!(" cannot convert {} to BootMode", value),
+        }
     }
 }
